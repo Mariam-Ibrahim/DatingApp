@@ -23,5 +23,16 @@ app.UseCors(builder=>builder.AllowAnyHeader().AllowAnyMethod().WithOrigins("http
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
- 
+ using var scope=app.Services.CreateScope();
+ var Services=scope.ServiceProvider;
+ try{
+    var context =Services.GetRequiredService<DataContext>();
+    await context.Database.MigrateAsync();
+    await Seed.SeedUsers(context);
+ }
+ catch (Exception ex)
+ {
+var logger =Services.GetService<ILogger<Program>>();
+logger.LogError(ex,"An error occured during migration");
+ }
 app.Run();
